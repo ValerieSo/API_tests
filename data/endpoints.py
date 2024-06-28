@@ -1,12 +1,12 @@
 class Endpoints:
     URL = 'http://qa-scooter.praktikum-services.ru/'
     # ручка создание курьера
-    endpoint_create_courier = f'{URL}api/v1/courier'
+    ENDPOINT_CREATE_COURIER = f'{URL}api/v1/courier'
     # ручка логин курьера
-    endpoint_login_courier = f'{URL}api/v1/courier/login'
+    ENDPOINT_LOGIN_COURIER = f'{URL}api/v1/courier/login'
     # ручка создание заказа
-    endpoint_make_order = f'{URL}api/v1/orders'
+    ENDPOINT_MAKE_ORDER = f'{URL}api/v1/orders'
     # ручка получения заказа по его номеру
-    endpoint_get_orders_id_by_track = f'{URL}api/v1/orders/track'
+    ENDPOINT_GET_ORDERS_ID_BY_TRACK = f'{URL}api/v1/orders/track'
     # ручка принятия заказа
-    endpoint_accept_order = f'{URL}api/v1/orders/accept/'
+    ENDPOINT_ACCEPT_ORDER = f'{URL}api/v1/orders/accept/'

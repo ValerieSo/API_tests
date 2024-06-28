@@ -1,9 +1,8 @@
 import allure
 import pytest
-import requests
 import json
-from data.endpoints import Endpoints
-from data.data import TestData
+from data.data import TestData, StatusCode, StatusResponse
+from base_api_methods import OrderAPI
 
 
 class TestOrder:
@@ -17,31 +16,32 @@ class TestOrder:
         payload = TestData.test_order_data
         payload["color"] = color
         json_payload = json.dumps(payload)
-        response = requests.post(Endpoints.endpoint_make_order, data=json_payload)
-        assert response.status_code == 201 and 'track' in response.json()
+        response = OrderAPI.response_create_order(json_payload)
+        assert response.status_code == StatusCode.CREATED and 'track' in response.json()
 
     @allure.title('Можно запросить список заказов')
     @allure.description('Отправляем запрос без каких-либо параметров, ожидаем код 200 и список заказов')
     def test_get_orders_list_all_got_orders(self):
-        response = requests.get(Endpoints.endpoint_make_order)
-        assert response.status_code == 200 and "orders" in response.json()
-
+        response = OrderAPI.response_get_orders_list()
+        assert response.status_code == StatusCode.OK and "orders" in response.json()
 
     def test_accept_order_with_existing_courier_and_order_ok(self, login_test_courier, get_orders_id):
         order_id = get_orders_id
         courier_id = login_test_courier
         payload = {'courierId': courier_id}
-        response = requests.put(f'{Endpoints.endpoint_accept_order}{order_id}', params=payload)
-        assert response.status_code == 200 and '{"ok":true}' in response.text
+        response = OrderAPI.response_accept_order(order_id, payload)
+        actual_result = response.json()["ok"]
+        assert response.status_code == StatusCode.OK and actual_result is True
 
     @allure.title('Нельзя принять заказ без указания параметра courierId')
     @allure.description(
         'Создаем заказ, принимаем заказ, не указывая параметр courierId, ожидаем код 400 и сообщение об ошибке')
     def test_accept_order_without_courier_id_conflict(self, get_orders_id):
         order_id = get_orders_id
-        response = requests.put(f'{Endpoints.endpoint_accept_order}{order_id}')
+        payload = None
+        response = OrderAPI.response_accept_order(order_id, payload)
         actual_result = response.json()["message"]
-        assert response.status_code == 400 and actual_result == 'Недостаточно данных для поиска'
+        assert response.status_code == StatusCode.BAD_REQUEST and actual_result == StatusResponse.BAD_REQUEST_ORDER
 
     @allure.title('Нельзя принять заказ, указав несуществующий параметр courierId')
     @allure.description(
@@ -50,19 +50,20 @@ class TestOrder:
         order_id = get_orders_id
         courier_id = 100500100
         payload = {"courierId": courier_id}
-        response = requests.put(f'{Endpoints.endpoint_accept_order}{order_id}', params=payload)
+        response = OrderAPI.response_accept_order(order_id, payload)
         actual_result = response.json()["message"]
-        assert response.status_code == 404 and actual_result == 'Курьера с таким id не существует'
+        assert response.status_code == StatusCode.NOT_FOUND and actual_result == StatusResponse.NOT_FOUND_COURIER_IN_ACCEPT_ORDER
 
     @allure.title('Нельзя принять заказ без указания параметра номер заказа')
     @allure.description(
         'Авторизуем курьера, принимаем заказ, не указывая параметр номер заказа, ожидаем код 400 и сообщение об ошибке')
     def test_accept_order_without_orders_id_bad_request(self, login_test_courier):
+        order_id = None
         courier_id = login_test_courier
         payload = {"courierId": courier_id}
-        response = requests.put(Endpoints.endpoint_accept_order, params=payload)
+        response = OrderAPI.response_accept_order(order_id, payload)
         actual_result = response.json()["message"]
-        assert response.status_code == 400 and actual_result == 'Недостаточно данных для поиска'
+        assert response.status_code == StatusCode.BAD_REQUEST and actual_result == StatusResponse.BAD_REQUEST_ORDER
 
     @allure.title('Нельзя принять заказ, указав несуществующий параметр номер заказа')
     @allure.description(
@@ -71,9 +72,9 @@ class TestOrder:
         order_id = 100500100
         courier_id = login_test_courier
         payload = {"courierId": courier_id}
-        response = requests.put(f'{Endpoints.endpoint_accept_order}{order_id}', params=payload)
+        response = OrderAPI.response_accept_order(order_id, payload)
         actual_result = response.json()["message"]
-        assert response.status_code == 404 and actual_result == 'Заказа с таким id не существует'
+        assert response.status_code == StatusCode.NOT_FOUND and actual_result == StatusResponse.NOT_FOUND_ORDER
 
     @allure.title('При успешном получении заказа по номеру отслеживания, в ответе отображается объект с заказом')
     @allure.description(
@@ -81,15 +82,16 @@ class TestOrder:
     def test_get_order_by_existing_track_order(self, create_order):
         track_number = create_order
         payload = {'t': track_number}
-        response = requests.get(Endpoints.endpoint_get_orders_id_by_track, params=payload)
-        assert response.status_code == 200 and 'order' in response.json()
+        response = OrderAPI.response_get_order_by_track(payload)
+        assert response.status_code == StatusCode.OK and 'order' in response.json()
 
     @allure.title('Нельзя получить заказ без указания номера отслеживания')
     @allure.description('Запрашиваем заказ, не указывая параметр t, ожидаем код 400 и сообщение об ошибке')
     def test_get_order_without_track_bad_request(self):
-        response = requests.get(Endpoints.endpoint_get_orders_id_by_track)
+        payload = None
+        response = OrderAPI.response_get_order_by_track(payload)
         actual_result = response.json()["message"]
-        assert response.status_code == 400 and actual_result == 'Недостаточно данных для поиска'
+        assert response.status_code == StatusCode.BAD_REQUEST and actual_result == StatusResponse.BAD_REQUEST_ORDER
 
     @allure.title('Нельзя получить заказ по несуществующему номеру отслеживания')
     @allure.description(
@@ -97,6 +99,6 @@ class TestOrder:
     def test_get_order_nonexistent_track_not_found(self):
         track_number = 100500100
         payload = {'t': track_number}
-        response = requests.get(Endpoints.endpoint_get_orders_id_by_track, params=payload)
+        response = OrderAPI.response_get_order_by_track(payload)
         actual_result = response.json()["message"]
-        assert response.status_code == 404 and actual_result == 'Заказ не найден'
+        assert response.status_code == StatusCode.NOT_FOUND and actual_result == StatusResponse.NOT_FOUND_TRACK_ORDER

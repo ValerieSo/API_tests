@@ -30,3 +30,24 @@ class TestData:
         "comment": "bring snack for Hegwig",
         "color": []
     }
+
+
+class StatusCode:
+
+    CREATED = 201
+    CONFLICT = 409
+    BAD_REQUEST = 400
+    OK = 200
+    NOT_FOUND = 404
+
+class StatusResponse:
+    CONFLICT_COURIER = 'Этот логин уже используется'
+    BAD_REQUEST_COURIER_REG = 'Недостаточно данных для создания учетной записи'
+    BAD_REQUEST_COURIER_lOG = 'Недостаточно данных для входа'
+    BAD_REQUEST_COURIER_DEL = 'Недостаточно данных для удаления курьера'
+    BAD_REQUEST_ORDER = 'Недостаточно данных для поиска'
+    NOT_FOUND_COURIER_LOG = 'Учетная запись не найдена'
+    NOT_FOUND_COURIER = 'Курьера с таким id нет.'
+    NOT_FOUND_COURIER_IN_ACCEPT_ORDER = 'Курьера с таким id не существует'
+    NOT_FOUND_ORDER = 'Заказа с таким id не существует'
+    NOT_FOUND_TRACK_ORDER = 'Заказ не найден'

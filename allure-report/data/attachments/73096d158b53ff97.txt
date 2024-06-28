@@ -1,2 +1,0 @@
-Известная ошибка: assert (404 == 400)
- +  where 404 = <Response [404]>.status_code
