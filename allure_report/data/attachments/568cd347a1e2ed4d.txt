@@ -1,0 +1,3 @@
+Известная ошибка: assert (500 == 400)
+ +  where 500 = <Response [500]>.status_code
+ +  and   400 = StatusCode.BAD_REQUEST
